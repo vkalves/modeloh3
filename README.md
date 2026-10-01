@@ -19,6 +19,18 @@ Instalador para recriar o ambiente MiniMax H3 usado no ComfyUI sem baixar cada a
 
 Os arquivos grandes **nao ficam armazenados no GitHub**. O script baixa diretamente do Hugging Face e depois confere o SHA256.
 
+## Workflow incluido
+
+O repositorio tambem inclui:
+
+`workflows/H3_FINAL_RTX_PRO_6000_REVISADO.json`
+
+Durante a instalacao, ele e copiado automaticamente para:
+
+`/workspace/runpod-slim/ComfyUI/user/default/workflows/`
+
+Assim o workflow final ja aparece no ComfyUI depois da instalacao.
+
 ## Instalacao em uma conta nova do RunPod
 
 Abra **JupyterLab > Terminal** e rode:
