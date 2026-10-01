@@ -68,6 +68,10 @@ for filename in files:
 PY
 
 echo
+echo "Copiando workflow final..."
+cp -f   "${SCRIPT_DIR}/workflows/H3_FINAL_RTX_PRO_6000_REVISADO.json"   "${COMFY_DIR}/user/default/workflows/H3_FINAL_RTX_PRO_6000_REVISADO.json"
+
+echo
 echo "Verificando integridade..."
 bash "${SCRIPT_DIR}/verify.sh"
 
@@ -76,4 +80,5 @@ echo "============================================"
 echo "INSTALACAO CONCLUIDA."
 echo "ComfyUI: ${COMFY_DIR}"
 echo "Modelos MiniMax H3 baixados e verificados."
+echo "Workflow instalado em user/default/workflows."
 echo "============================================"
