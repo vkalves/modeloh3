@@ -1,32 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-COMFY_DIR="$(printenv COMFY_DIR || printf /workspace/runpod-slim/ComfyUI)"
-if [ ! -d "$COMFY_DIR" ]; then
-  echo "ERRO: ComfyUI nao encontrado em $COMFY_DIR"
-  exit 1
-fi
+source "$(dirname "$0")/scripts/common.sh"
+require_python
 cd "$COMFY_DIR"
 
-if [ -x "$COMFY_DIR/.venv-cu128/bin/python" ]; then
-  PYTHON="$COMFY_DIR/.venv-cu128/bin/python"
-elif [ -x "$COMFY_DIR/.venv/bin/python" ]; then
-  PYTHON="$COMFY_DIR/.venv/bin/python"
-else
-  PYTHON="$(command -v python3 || command -v python)"
-fi
-
 echo "== Ambiente =="
-git describe --tags --always || true
+actual_version="$(git describe --tags --exact-match 2>/dev/null || true)"
+[[ "$actual_version" = "$COMFY_VERSION" ]] || { echo "ERRO: esperado $COMFY_VERSION, encontrado $actual_version"; exit 1; }
+echo "$actual_version"
 "$PYTHON" -m pip check
 echo
 echo "== GPU / Torch =="
 "$PYTHON" - <<'PY'
 import torch
+print("Python:", __import__("sys").executable)
 print("Torch:", torch.__version__)
 print("CUDA:", torch.version.cuda)
 print("GPU:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CUDA indisponivel")
 print("Capability:", torch.cuda.get_device_capability(0) if torch.cuda.is_available() else "-")
+if not torch.cuda.is_available():
+    print("AVISO: CUDA indisponivel. Arquivos podem ser verificados, mas a geracao nao esta pronta.")
 PY
 
 check_file () {
@@ -34,6 +28,7 @@ check_file () {
   local file="$2"
   if [ ! -f "$file" ]; then echo "FALTANDO: $file"; return 1; fi
   local actual
+  echo "Conferindo integridade: $file (arquivos grandes podem demorar)"
   actual="$(sha256sum "$file" | awk '{print $1}')"
   if [ "$actual" = "$expected" ]; then
     echo "OK  $file"
@@ -62,7 +57,7 @@ check_present "custom_nodes/ComfyUI-H3-Reusable/__init__.py"
 check_present "custom_nodes/ComfyUI-H3-Reusable/logic.py"
 grep -q "h3-mask-protection-v2" "custom_nodes/ComfyUI-H3-Reusable/__init__.py" || { echo "ERRO: mascara v2 nao encontrada"; exit 1; }
 check_present "user/default/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json"
-python -m json.tool "user/default/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json" >/dev/null
+"$PYTHON" -m json.tool "user/default/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json" >/dev/null
 
 echo
-echo "Workflow e arquivos presentes."
+echo "Arquivos verificados. Isso nao valida o servidor nem a geracao de video."

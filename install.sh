@@ -1,86 +1,74 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-COMFY_VERSION="$(printenv COMFY_VERSION || printf v0.38.0)"
-COMFY_DIR="$(printenv COMFY_DIR || printf /workspace/runpod-slim/ComfyUI)"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-NODE_SOURCE="$SCRIPT_DIR/custom_nodes/ComfyUI-H3-Reusable"
-NODE_TARGET="$COMFY_DIR/custom_nodes/ComfyUI-H3-Reusable"
-
-echo "== MiniMax H3 + SAM3.1 / ComfyUI installer =="
-echo "ComfyUI: $COMFY_VERSION"
-echo "Destino:  $COMFY_DIR"
-
-mkdir -p "$(dirname "$COMFY_DIR")"
-if [ ! -d "$COMFY_DIR/.git" ]; then
-  if [ -d "$COMFY_DIR" ] && [ "$(ls -A "$COMFY_DIR" 2>/dev/null || true)" ]; then
-    echo "ERRO: $COMFY_DIR existe, mas nao e um repositorio Git."
-    echo "Use o template ComfyUI - CUDA 13.0 do RunPod ou defina COMFY_DIR."
-    exit 1
-  fi
-  echo "Clonando ComfyUI..."
-  git clone https://github.com/Comfy-Org/ComfyUI.git "$COMFY_DIR"
-fi
-
-cd "$COMFY_DIR"
-git fetch --tags
-git checkout "$COMFY_VERSION"
-if [ -x "$COMFY_DIR/.venv-cu128/bin/python" ]; then
-  PYTHON="$COMFY_DIR/.venv-cu128/bin/python"
-elif [ -x "$COMFY_DIR/.venv/bin/python" ]; then
-  PYTHON="$COMFY_DIR/.venv/bin/python"
-else
-  PYTHON="$(command -v python3 || command -v python)"
-fi
-
-echo "Python: $PYTHON"
-echo "Instalando dependencias do ComfyUI..."
-"$PYTHON" -m pip install -r requirements.txt
-"$PYTHON" -m pip install "huggingface_hub>=0.34,<2.0"
-
-mkdir -p models/diffusion_models models/text_encoders models/vae models/checkpoints user/default/workflows custom_nodes
-echo "Baixando os pesos usados pelo workflow..."
-"$PYTHON" - <<'PY'
+set -Eeuo pipefail
+source "$(dirname "$0")/scripts/common.sh"
+for cmd in git python3 flock; do
+  command -v "$cmd" >/dev/null || { echo "ERRO: instale $cmd no template antes de continuar."; exit 1; }
+done
+mkdir -p "$ROOT_DIR/logs"
+exec 9>"$ROOT_DIR/.h3-install.lock"
+flock -n 9 || { echo 'Ja existe uma instalacao em andamento neste repositorio.'; exit 1; }
+LOG="$ROOT_DIR/logs/install-$(date +%Y%m%d-%H%M%S).log"
+exec > >(tee -a "$LOG") 2>&1
+trap 'echo "ERRO na etapa ${STEP:-inicial}, linha $LINENO. Log: $LOG. Corrija o erro e repita bash install.sh; nao apague os modelos."' ERR
+export PYTHONUNBUFFERED=1 PIP_DISABLE_PIP_VERSION_CHECK=1 HF_HUB_DOWNLOAD_TIMEOUT=60 HF_HUB_ETAG_TIMEOUT=30
+export GIT_TERMINAL_PROMPT=0
+# Ignore another ComfyUI virtualenv inherited from the terminal.
+BASE_PYTHON="${H3_BASE_PYTHON:-$(python3 -c 'import sys; print(sys._base_executable)')}"
+step() { STEP="$1"; echo; echo "[$STEP/7] $2"; }
+run() { "$BASE_PYTHON" "$ROOT_DIR/scripts/run_step.py" "$@"; }
+step 1 'Conferindo armazenamento e ambiente'
+echo "Destino: $COMFY_DIR | Versao: $COMFY_VERSION | Log: $LOG"
+"$BASE_PYTHON" "$ROOT_DIR/scripts/preflight.py"
+# Refuse to modify code/dependencies of a live instance.
+"$BASE_PYTHON" - <<'PY'
+from pathlib import Path
 import os
-from huggingface_hub import hf_hub_download
-
-token = os.environ.get("HF_TOKEN") or None
-files = [
-    ("Comfy-Org/MiniMax-H3", "diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors"),
-    ("Comfy-Org/MiniMax-H3", "text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"),
-    ("Comfy-Org/MiniMax-H3", "vae/minimax_h3_video_vae_int8_convrot.safetensors"),
-    ("Comfy-Org/MiniMax-H3", "vae/minimax_h3_audio_vae_fp32.safetensors"),
-    ("Comfy-Org/sam3.1", "checkpoints/sam3.1_multiplex_fp16.safetensors"),
-]
-for repo_id, filename in files:
-    print(f"\n>>> {repo_id}/{filename}")
-    hf_hub_download(repo_id=repo_id, filename=filename, local_dir="models", token=token)
+for proc in Path('/proc').glob('[0-9]*'):
+    try:
+        args = (proc/'cmdline').read_bytes().split(b'\0')
+        if b'main.py' in args and (proc/'cwd').resolve() == Path(os.environ['COMFY_DIR']).resolve():
+            raise SystemExit(f'ComfyUI deste destino esta ativo (PID {proc.name}). Pare-o antes de instalar.')
+    except (PermissionError, FileNotFoundError, ProcessLookupError):
+        pass
 PY
-
-echo
-echo "Instalando o nó H3 com mascara v2..."
-if ! grep -q "h3-mask-protection-v2" "$NODE_SOURCE/__init__.py"; then
-  echo "ERRO: o pacote do nó nao contem a correcao de mascara v2."
-  exit 1
+step 2 'Preparando ComfyUI'
+if [[ ! -d "$COMFY_DIR/.git" ]]; then
+  [[ -z "$(ls -A "$COMFY_DIR")" ]] || { echo 'Destino nao vazio e sem Git. Escolha outra pasta com COMFY_DIR.'; exit 1; }
+  run git clone --branch "$COMFY_VERSION" --depth 1 https://github.com/Comfy-Org/ComfyUI.git "$COMFY_DIR"
 fi
+cd "$COMFY_DIR"
+[[ -z "$(git status --porcelain --untracked-files=no)" ]] || { echo 'ComfyUI tem alteracoes locais. Preserve-as antes de atualizar.'; exit 1; }
+run git fetch --depth 1 origin "tag" "$COMFY_VERSION"
+git checkout --detach "$COMFY_VERSION"
+step 3 'Criando ambiente Python exclusivo do H3'
+if [[ ! -x "$PYTHON" ]]; then
+  run "$BASE_PYTHON" -m venv "$COMFY_DIR/.venv-h3"
+fi
+"$PYTHON" -c 'import sys; print("Python H3:", sys.executable)'
+run "$PYTHON" -m pip install --timeout 60 --retries 3 -r requirements.txt
+run "$PYTHON" -m pip install --timeout 60 --retries 3 'huggingface_hub>=0.34,<2.0'
+"$PYTHON" -m pip check
+step 4 'Baixando modelos (repetir aproveita o cache do Hugging Face)'
+mkdir -p models user/default/workflows custom_nodes
+run "$PYTHON" "$ROOT_DIR/scripts/download_models.py"
+step 5 'Instalando no e workflow; preservando copia anterior'
+NODE_SOURCE="$ROOT_DIR/custom_nodes/ComfyUI-H3-Reusable"
+grep -q h3-mask-protection-v2 "$NODE_SOURCE/__init__.py"
 "$PYTHON" -m py_compile "$NODE_SOURCE/__init__.py" "$NODE_SOURCE/logic.py"
-if [ -d "$NODE_TARGET" ]; then
-  BACKUP="$COMFY_DIR/h3_backups/ComfyUI-H3-Reusable_$(date +%Y%m%d_%H%M%S)"
-  mkdir -p "$(dirname "$BACKUP")"
-  cp -a "$NODE_TARGET" "$BACKUP"
-  echo "Backup do nó anterior: $BACKUP"
+BACKUP="$COMFY_DIR/h3_backups/$(date +%Y%m%d-%H%M%S)-$$"
+mkdir -p "$BACKUP"
+if [[ -e custom_nodes/ComfyUI-H3-Reusable ]]; then
+  mv custom_nodes/ComfyUI-H3-Reusable "$BACKUP/"
 fi
-rm -rf "$NODE_TARGET"
-cp -a "$NODE_SOURCE" "$NODE_TARGET"
-
-echo
-echo "Instalando o workflow atual..."
-cp -f "$SCRIPT_DIR/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json" \
-  "$COMFY_DIR/user/default/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json"
-
-echo
-echo "Verificando..."
-bash "$SCRIPT_DIR/verify.sh"
-echo
-echo "INSTALACAO CONCLUIDA."
-echo "Reinicie o ComfyUI antes de usar o workflow."
+cp -a "$NODE_SOURCE" custom_nodes/
+if [[ -f "user/default/workflows/$WORKFLOW" ]]; then
+  cp -a "user/default/workflows/$WORKFLOW" "$BACKUP/"
+fi
+cp "$ROOT_DIR/workflows/$WORKFLOW" user/default/workflows/
+step 6 'Verificando dependencias e arquivos'
+run bash "$ROOT_DIR/verify.sh"
+step 7 'Salvando destino para os proximos comandos'
+printf '%s\n' "$COMFY_DIR" > "$ROOT_DIR/.h3-comfy-dir"
+echo 'ARQUIVOS INSTALADOS E VERIFICADOS. O servidor ainda precisa ser iniciado.'
+echo "Para abrir a instalacao correta: bash $ROOT_DIR/start.sh"
+echo 'A geracao de video ainda precisa de um teste real na GPU.'
