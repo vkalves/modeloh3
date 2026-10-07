@@ -50,14 +50,16 @@ check_file "35a88d51044231fe332301d7a62aa81e3f2cba62febeb446e2c1e3e0ef76f2c6" "m
 check_file "8e505d95dd1561d47abd43d4238fd40d9bb1ae9e147ed0a4cba778d76ae4db48" "models/vae/minimax_h3_audio_vae_fp32.safetensors"
 
 echo
-echo "== Pesos do workflow atual =="
+echo "== Pesos e nos do workflow V2 =="
 check_present "models/vae/minimax_h3_video_vae_int8_convrot.safetensors"
 check_present "models/checkpoints/sam3.1_multiplex_fp16.safetensors"
 check_present "custom_nodes/ComfyUI-H3-Reusable/__init__.py"
 check_present "custom_nodes/ComfyUI-H3-Reusable/logic.py"
-grep -q "h3-mask-protection-v2" "custom_nodes/ComfyUI-H3-Reusable/__init__.py" || { echo "ERRO: mascara v2 nao encontrada"; exit 1; }
-check_present "user/default/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json"
-"$PYTHON" -m json.tool "user/default/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json" >/dev/null
+check_present "custom_nodes/H3-Prompt-Unico-V2/__init__.py"
+grep -q "h3-mask-protection-v2" "custom_nodes/ComfyUI-H3-Reusable/__init__.py" || { echo "ERRO: base H3 reutilizavel nao encontrada"; exit 1; }
+grep -q "h3-smart-mask-v2-generic" "custom_nodes/H3-Prompt-Unico-V2/__init__.py" || { echo "ERRO: mascara universal V2 nao encontrada"; exit 1; }
+check_present "user/default/workflows/$WORKFLOW"
+"$PYTHON" -m json.tool "user/default/workflows/$WORKFLOW" >/dev/null
 
 echo
-echo "Arquivos verificados. Isso nao valida o servidor nem a geracao de video."
+echo "Arquivos V2 verificados. Isso valida arquivos e dependencias, nao a qualidade visual de uma geracao especifica."
