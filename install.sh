@@ -17,7 +17,7 @@ BASE_PYTHON="${H3_BASE_PYTHON:-$(python3 -c 'import sys; print(sys._base_executa
 step() { STEP="$1"; echo; echo "[$STEP/7] $2"; }
 run() { "$BASE_PYTHON" "$ROOT_DIR/scripts/run_step.py" "$@"; }
 step 1 'Conferindo armazenamento e ambiente'
-echo "Destino: $COMFY_DIR | Versao: $COMFY_VERSION | Log: $LOG"
+echo "Destino: $COMFY_DIR | Versao: $COMFY_VERSION | Workflow: $WORKFLOW | Log: $LOG"
 "$BASE_PYTHON" "$ROOT_DIR/scripts/preflight.py"
 # Refuse to modify code/dependencies of a live instance.
 "$BASE_PYTHON" - <<'PY'
@@ -51,16 +51,21 @@ run "$PYTHON" -m pip install --timeout 60 --retries 3 'huggingface_hub>=0.34,<2.
 step 4 'Baixando modelos (repetir aproveita o cache do Hugging Face)'
 mkdir -p models user/default/workflows custom_nodes
 run "$PYTHON" "$ROOT_DIR/scripts/download_models.py"
-step 5 'Instalando no e workflow; preservando copia anterior'
-NODE_SOURCE="$ROOT_DIR/custom_nodes/ComfyUI-H3-Reusable"
-grep -q h3-mask-protection-v2 "$NODE_SOURCE/__init__.py"
-"$PYTHON" -m py_compile "$NODE_SOURCE/__init__.py" "$NODE_SOURCE/logic.py"
+step 5 'Instalando nos V2 e workflow atual; preservando copias anteriores'
+BASE_NODE_SOURCE="$ROOT_DIR/custom_nodes/ComfyUI-H3-Reusable"
+V2_NODE_SOURCE="$ROOT_DIR/custom_nodes/H3-Prompt-Unico-V2"
+grep -q h3-mask-protection-v2 "$BASE_NODE_SOURCE/__init__.py"
+grep -q h3-smart-mask-v2-generic "$V2_NODE_SOURCE/__init__.py"
+"$PYTHON" -m py_compile "$BASE_NODE_SOURCE/__init__.py" "$BASE_NODE_SOURCE/logic.py" "$V2_NODE_SOURCE/__init__.py"
 BACKUP="$COMFY_DIR/h3_backups/$(date +%Y%m%d-%H%M%S)-$$"
 mkdir -p "$BACKUP"
-if [[ -e custom_nodes/ComfyUI-H3-Reusable ]]; then
-  mv custom_nodes/ComfyUI-H3-Reusable "$BACKUP/"
-fi
-cp -a "$NODE_SOURCE" custom_nodes/
+for node_dir in ComfyUI-H3-Reusable H3-Prompt-Unico-V2; do
+  if [[ -e "custom_nodes/$node_dir" ]]; then
+    mv "custom_nodes/$node_dir" "$BACKUP/"
+  fi
+done
+cp -a "$BASE_NODE_SOURCE" custom_nodes/
+cp -a "$V2_NODE_SOURCE" custom_nodes/
 if [[ -f "user/default/workflows/$WORKFLOW" ]]; then
   cp -a "user/default/workflows/$WORKFLOW" "$BACKUP/"
 fi
@@ -68,7 +73,9 @@ cp "$ROOT_DIR/workflows/$WORKFLOW" user/default/workflows/
 step 6 'Verificando dependencias e arquivos'
 run bash "$ROOT_DIR/verify.sh"
 step 7 'Salvando destino para os proximos comandos'
-printf '%s\n' "$COMFY_DIR" > "$ROOT_DIR/.h3-comfy-dir"
-echo 'ARQUIVOS INSTALADOS E VERIFICADOS. O servidor ainda precisa ser iniciado.'
+printf '%s
+' "$COMFY_DIR" > "$ROOT_DIR/.h3-comfy-dir"
+echo 'ARQUIVOS V2 INSTALADOS E VERIFICADOS. O servidor ainda precisa ser iniciado.'
+echo "Workflow atual: $COMFY_DIR/user/default/workflows/$WORKFLOW"
 echo "Para abrir a instalacao correta: bash $ROOT_DIR/start.sh"
-echo 'A geracao de video ainda precisa de um teste real na GPU.'
+echo 'A geracao real depende da GPU; o workflow V2 ja foi validado em teste real no RunPod.'
