@@ -1,20 +1,32 @@
-# MiniMax H3 no RunPod
+# MiniMax H3 V2 no RunPod
 
-Instala o ComfyUI **v0.38.0**, os pesos H3, SAM3.1 e o workflow com máscara corrigida. Sem LoRA e sem serviço de geração externo.
+Instala o ComfyUI **v0.38.0**, os pesos MiniMax H3, SAM3.1 e o workflow atual **H3 Prompt Único V2**. Sem LoRA e sem serviço de geração externo.
+
+A V2 é genérica: ela não fica presa a um vídeo ou personagem específico. O usuário define quem editar, quais regiões regenerar, o que proteger e o prompt completo do H3.
+
+## O que mudou na V2
+
+- `[PESSOA]` identifica **quem** será editado no vídeo.
+- `[EDITAR]` define **o que** será regenerado, uma região por linha: `face`, `hair`, `clothing`, `whole person` etc.
+- `[PROTEGER]` lista objetos ou regiões que devem permanecer intactos.
+- `[PROMPT]` recebe o prompt completo enviado ao H3.
+- A máscara das regiões de edição é criada separadamente e intersectada com a pessoa alvo.
+- A área editável é neutralizada somente na referência de movimento enviada ao H3, reduzindo a competição da identidade original com as fotos novas.
+- O vídeo original continua sendo a base latente e a composição final.
+- O workflow salva três diagnósticos: máscara vermelha, referência de movimento sanitizada e geração bruta.
+- O workflow V2 foi validado em geração real no RunPod.
 
 ## 1. Prepare o Pod
 
-- Use um template com **Python, Git, venv e acesso ao terminal**. Confira se o Jupyter realmente abre antes de instalar.
-- Se os logs mostram `.venv-cu128/bin/activate: No such file or directory`, o template tem um ambiente ausente. Esperar pelo download do H3 não corrige esse problema.
-- Use um disco que aceite Git, permissões (`chmod`) e links. O erro `config.lock ... Operation not permitted` aconteceu no volume usado na instalação anterior. O script agora testa essas operações antes de baixar o ComfyUI.
-- Reserve espaço para os cinco modelos, PyTorch e dependências. O instalador consulta os tamanhos dos modelos e verifica espaço livre antes de baixá-los. Um `df` com capacidade virtual, como `1.0P`, não confirma a cota real: confira o painel do RunPod.
-- Ao trocar de Pod/GPU, confirme que os arquivos estarão no novo Pod antes de excluir o antigo. Não há migração automática de disco local.
-
-Uma GPU menor pode servir para baixar e verificar arquivos. Isso **não comprova** que ela consegue gerar vídeo.
+- Use um template com **Python, Git, venv e terminal/Jupyter funcionando**.
+- Use armazenamento que aceite Git, `chmod`, renomeação e links.
+- Reserve espaço para os modelos H3, SAM3.1, PyTorch e dependências.
+- Ao trocar de Pod, conecte o mesmo armazenamento antes de remover o Pod antigo.
+- Se a porta 8188 já estiver sendo usada pelo ComfyUI do template, pare esse processo antes de iniciar o H3.
 
 ## 2. Instale
 
-No terminal do JupyterLab ou Code Server, cole o bloco inteiro:
+Em uma instalação nova:
 
 ```bash
 cd /workspace &&
@@ -23,83 +35,123 @@ cd /workspace/modeloh3 &&
 bash install.sh
 ```
 
-Os `&&` impedem continuar se o clone falhar. Se a pasta `modeloh3` já existe, use a atualização abaixo.
+Destino padrão:
 
-O destino padrão é `/workspace/ComfyUI-H3`. O Python fica em **`.venv-h3` dentro dessa pasta**. Um ambiente antigo ativado no terminal não é reutilizado. Na primeira instalação, PyTorch também pode precisar de um download grande.
+```text
+/workspace/ComfyUI-H3
+```
 
-As etapas são numeradas. A cada 20 segundos, uma mensagem informa que o comando ainda executa; isso não significa que o download avançou. Veja também as barras de download e o log indicado na tela. Avisos de token ausente não são, por si só, falhas; erros de acesso/download interrompem o script.
+O ambiente Python usado pelo projeto fica em:
 
-Se houver erro, leia a última mensagem e corrija a causa. Depois execute `bash install.sh` novamente. Não apague os modelos: o Hugging Face aproveita os arquivos/cache disponíveis. O instalador guarda backups do nó e do workflow antes de substituir esses arquivos.
+```text
+/workspace/ComfyUI-H3/.venv-h3
+```
 
-## 3. Abra o ComfyUI correto
+O instalador reaproveita arquivos e cache já existentes quando possível. Não apague os modelos para corrigir um erro de dependência ou de workflow.
+
+## 3. Atualizar uma instalação existente
+
+Pare o processo do ComfyUI H3 e execute:
+
+```bash
+cd /workspace/modeloh3
+git pull --ff-only
+bash install.sh
+```
+
+O instalador faz backup das versões anteriores dos nós/workflow antes de copiar a versão atual.
+
+## 4. Iniciar o ComfyUI correto
 
 ```bash
 cd /workspace/modeloh3
 bash start.sh
 ```
 
-Aguarde **COMFYUI H3 PRONTO**. Abra a porta **8188** no painel do RunPod. Deixe o terminal aberto; `Ctrl+C` encerra esse servidor.
+Aguarde:
 
-O comando usa a pasta e o Python da instalação H3, verifica CUDA e consulta os nós carregados pelo servidor. Não basta aparecer “instalação concluída”: o servidor precisa passar por essa etapa.
+```text
+COMFYUI H3 V2 PRONTO
+```
 
-**Porta ocupada:** o script informa o conflito e as pastas dos processos ComfyUI encontrados. Não encerra nada automaticamente. Pare a instalação antiga pelo terminal dela e repita. Se o template reinicia o serviço antigo automaticamente, configure seu serviço ou use outra porta:
+Abra a porta **8188** no RunPod. Deixe o terminal aberto; `Ctrl+C` encerra o servidor.
+
+Se a porta 8188 estiver ocupada, o script mostra os processos encontrados e não encerra nada automaticamente. Também é possível usar outra porta:
 
 ```bash
 PORT=8189 bash start.sh
 ```
 
-Nesse caso, exponha a porta **8189 como HTTP no RunPod** e abra essa porta. Reiniciar pelo Manager de uma instalação antiga não inicia a instalação H3.
+## 5. Workflow atual
 
-Abra o workflow:
+O workflow instalado é:
 
 ```text
-/workspace/ComfyUI-H3/user/default/workflows/H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json
+/workspace/ComfyUI-H3/user/default/workflows/H3_PROMPT_UNICO_V2.json
 ```
 
-## Atualizar ou verificar
+No bloco **03 - PEDIDO UNIVERSAL**, use esta estrutura:
 
-Pare o servidor H3 antes de atualizar. Na pasta do repositório:
+```text
+[PESSOA]
+describe the target person in the source video
 
-```bash
-git pull --ff-only && bash install.sh
+[EDITAR]
+face
+hair
+
+[PROTEGER]
+hands
+
+[PROMPT]
+Write the complete H3 edit prompt here. Use @Video1 for the source video and @Image1, @Image2, etc. for loaded reference images.
 ```
 
-Para verificar os arquivos novamente:
+### Regras importantes
+
+- `[PESSOA]` serve somente para localizar a pessoa correta.
+- `[EDITAR]` controla a área que realmente pode ser regenerada.
+- Use uma região por linha em `[EDITAR]`.
+- Confira sempre a prévia vermelha antes da geração final.
+- `@Image1`, `@Image2` etc. seguem a ordem das fotos realmente carregadas; slots vazios são ignorados.
+- `@Video1` é convertido internamente para a referência de vídeo do H3.
+- O áudio original é preservado quando presente.
+- Para testes, comece com 3 segundos e resolução 672 antes de aumentar a duração.
+
+## 6. Saídas de diagnóstico
+
+Além do resultado final, a V2 salva:
+
+```text
+video/H3_PREVIA_MASCARA
+video/H3_PREVIA_GERACAO_BRUTA
+video/H3_PREVIA_REFERENCIA_SANITIZADA
+```
+
+Essas três saídas ajudam a identificar se um problema está na máscara, na geração do H3 ou na composição final.
+
+## 7. Verificar arquivos
 
 ```bash
+cd /workspace/modeloh3
 bash verify.sh
 ```
 
-A verificação usa o mesmo Python, confere dependências e a versão, calcula SHA256 de três pesos registrados em `models.sha256` e verifica a presença dos demais. A leitura de arquivos grandes pode demorar. Ela não é um teste de geração.
+A verificação confere ambiente, dependências, arquivos de modelo, os dois pacotes de nós personalizados e o JSON do workflow atual. Ela não mede qualidade visual.
 
-Para destino diferente, na instalação:
+Para instalar em outro caminho:
 
 ```bash
 COMFY_DIR=/workspace/MeuComfyH3 bash install.sh
 ```
 
-Após uma instalação bem-sucedida, esse destino fica salvo localmente para `start.sh`, `verify.sh` e próximas instalações. `COMFY_DIR` explícito sempre tem prioridade. Ao mover o repositório para outro Pod, confira esse caminho.
+## Estrutura dos nós personalizados
 
-## Usar o workflow
+A V2 usa dois pacotes locais do próprio repositório:
 
-- Comece com um trecho curto, por exemplo 3 segundos. O workflow vem com 15 segundos e lado maior de 672 pixels; ajuste a duração ao vídeo.
-- Carregue o vídeo e somente as referências necessárias; deixe as outras em `(VAZIO - ignorar)`.
-- Descreva a função de cada referência no próprio slot. Confira a ordem das imagens carregadas e o prompt salvo; não reutilize números `Image 1/2` de outro caso sem conferir.
-- Preencha os cinco campos do pedido: alvo, mudança, preservação, uso das referências e objetos protegidos. Substitua os exemplos de outro vídeo.
-- Confira a máscara vermelha, principalmente ao trocar somente rosto e cabelo. Um prompt sozinho não garante que a máscara selecione apenas a cabeça.
-- O resultado é composto sobre as dimensões originais, a 24 fps. O áudio original é encaminhado quando presente.
+```text
+custom_nodes/ComfyUI-H3-Reusable
+custom_nodes/H3-Prompt-Unico-V2
+```
 
-**Estado dos testes:** os scripts têm testes locais sem GPU. A instalação completa, o consumo de memória e a geração precisam ser confirmados no RunPod; não há garantia de qualidade da troca só porque o servidor abriu.
-
-## Erros observados e prevenção
-
-| Problema anterior | Mudança |
-| --- | --- |
-| Git falhava por permissões no volume | Teste de chmod, renomeação, links e Git antes do clone do ComfyUI |
-| Python de outra instalação era usado | Ambiente `.venv-h3` próprio e compartilhado pelos três comandos |
-| Longa espera sem indicação | Etapas, mensagens periódicas e logs em `logs/` |
-| Porta 8188 abria ComfyUI 0.30.0 | `start.sh` aponta para o H3 e detecta porta ocupada |
-| “Concluído” mesmo sem abrir o servidor | Mensagens separadas para arquivos verificados e servidor pronto |
-| Reinício não carregava os nós certos | Conferência dos tipos de nó do workflow em `/object_info` |
-
-Erros de criação do contêiner, Jupyter indisponível e configurações de portas do RunPod acontecem antes ou fora deste instalador. O script não consegue corrigir o host do RunPod.
+O primeiro contém a preparação do vídeo, latente mascarado, composição e salvamento do prompt. O segundo contém o pedido universal V2, referências manuais, máscara por pessoa + regiões e a referência de movimento sanitizada.
