@@ -7,8 +7,8 @@ fi
 export COMFY_DIR="${COMFY_DIR:-/workspace/ComfyUI-H3}"
 [[ "$COMFY_DIR" = /* && "$COMFY_DIR" != / ]] || { echo 'ERRO: COMFY_DIR deve ser um caminho absoluto diferente de /.'; exit 1; }
 export COMFY_VERSION="${COMFY_VERSION:-v0.38.0}"
+export WORKFLOW="${WORKFLOW:-H3_PROMPT_UNICO_V2.json}"
 PYTHON="$COMFY_DIR/.venv-h3/bin/python"
-WORKFLOW=H3_REUTILIZAVEL_SAM3_MASCARA_NATIVA.json
 require_python() {
   [[ -x "$PYTHON" ]] || { echo "Ambiente H3 ausente. Execute: bash $ROOT_DIR/install.sh"; exit 1; }
 }
