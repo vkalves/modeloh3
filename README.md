@@ -6,6 +6,12 @@ A V2 é genérica: ela não fica presa a um vídeo ou personagem específico. O 
 
 **[Tutorial completo: instalação, atualização e solução de erros](docs/INSTALACAO_E_ERROS.md)** — comandos para o terminal do Pod e causas possíveis de erros de instalação, vídeo preto, memória, máscara, referências e exportação.
 
+## Prompt base para novas gerações
+
+O campo **03 - PEDIDO UNIVERSAL** já contém a base em inglês para troca de rosto e cabelo, com realismo, fidelidade das referências, continuidade do movimento e boca alinhada à fala original. [Como usar e adaptar para mais referências](docs/PROMPT_BASE.md) · [Copiar o prompt](prompts/BASE_CABECA_EN.txt).
+
+Antes de gerar, descreva a pessoa original em `[PESSOA]` e carregue suas fotos. O áudio original é preservado, mas sincronia labial perfeita não é garantida pelo prompt.
+
 ## Correção validada: geração sem alteração
 
 Em 09/10/2026, o usuário confirmou que o pacote **H3_TESTE_MASCARA_V1** resolveu o problema no teste real. O workflow principal agora usa exatamente os arquivos Python desse pacote, com os mesmos identificadores `H3T1_`. Os nomes “TESTE V1” são mantidos para preservar o código aprovado e evitar colisões com nós antigos.
@@ -16,7 +22,7 @@ Em 09/10/2026, o usuário confirmou que o pacote **H3_TESTE_MASCARA_V1** resolve
 - Preserva frames individuais sem seleção quando a pessoa sai do quadro ou fica oculta.
 - Confere o conteúdo dos nós instalados ao iniciar com `start.sh`.
 
-Para atualizar **somente nós e workflow**, sem reinstalar ComfyUI ou modelos:
+Pare o ComfyUI antes de atualizar. Para atualizar **somente nós e workflow**, sem reinstalar ComfyUI ou modelos:
 
 ```bash
 cd /workspace/modeloh3
@@ -24,9 +30,9 @@ git pull --ff-only
 bash update_nodes.sh
 ```
 
-Depois reinicie o ComfyUI pelo método que já usa e reabra `H3_PROMPT_UNICO_V2.json`. O script salva backup dos nós e do workflow anterior. A cópia já aberta no navegador não é atualizada automaticamente. Quem já instalou o teste aprovado pode continuar usando esse teste; os arquivos Python são idênticos.
+Depois reinicie o ComfyUI pelo método que já usa e reabra `H3_PROMPT_UNICO_V2.json`. O script salva backup dos nós e do workflow anterior. Prepara a cópia antes da substituição, impede atualizações simultâneas e restaura os arquivos anteriores se detectar falha durante a troca. A cópia já aberta no navegador não é atualizada automaticamente. Quem já instalou o teste aprovado pode continuar usando esse teste; os arquivos Python são idênticos.
 
-O modelo genérico do repositório mantém seus parâmetros anteriores (20 passos, 672, `match`); prompt e fotos continuam manuais. A resolução e os passos de produção devem ser os que você validou. A aprovação do teste não demonstra qual mudança isolada causou a melhora nem garante identidade perfeita em outros vídeos.
+O modelo genérico do repositório mantém seus parâmetros anteriores (20 passos, 672, `match`); o prompt base continua editável e as fotos continuam manuais. A resolução e os passos de produção devem ser os que você validou. A aprovação do teste não demonstra qual mudança isolada causou a melhora nem garante identidade perfeita em outros vídeos.
 
 ## Proteções contra vídeo preto
 

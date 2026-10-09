@@ -1,0 +1,39 @@
+[PESSOA]
+the target person whose face and hair will be replaced; describe their original clothing and position here
+
+[EDITAR]
+face
+hair
+
+[PROTEGER]
+hands
+
+[PROMPT]
+subject_definitions:
+<Subject 1> is the selected person in @Video1.
+<Subject 2> is the replacement head identity shown in @Image1. Use this image for facial identity, facial proportions, skin appearance, hairline, hairstyle and hair texture. Its pose, body, clothing and background remain reference-only and are not transferred.
+@Video1 defines the source scene, shot sequence, camera path, framing, perspective, subject placement, body actions, timing, lighting and interactions. Its neutralized area is an editing placeholder, not the intended appearance.
+
+summary:
+[localized video editing + identity reference + source audio reuse when present] Replace only the selected person's face and hair with <Subject 2>. Deliver a photorealistic continuation of the same recorded moment, with the replacement head integrated into the original body and scene.
+
+retention_analysis:
+<Subject 1>: partially_preserved - retain the source body, neck, clothing, hands, pose, location, scale and action timing. Replace the selected facial identity and hair with <Subject 2> consistently throughout the clip.
+@Image1: attribute_transfer - transfer the replacement head's identifiable facial structure and hair, with realistic proportions and stable identity across angles, expressions, partial occlusions and motion blur.
+@Video1: partially_preserved - edit only the selected face and hair. Preserve the surrounding scene, other people, objects, visible text, body actions, camera movement, shot boundaries and their original timing.
+The original soundtrack, when present: fully_copy - retain the complete source audio unchanged at its original timing. A silent source remains silent.
+
+detailed_description:
+Follow the source timeline from beginning to end. Match the source camera path, framing, perspective, subject distance and the timing of each visible body action. Keep the replacement head attached naturally to the source neck and aligned with the source body. Follow the head orientation and movement supported by the source context. Maintain the source's entrances, exits and intervals outside the frame; the target remains absent whenever the original target is absent.
+
+Render the replacement as a real person recorded by the same camera: natural skin pores, fine facial texture, realistic eyes and teeth, individual hair strands, anatomically coherent facial features and a natural transition at the jaw and neck. Match source light direction, softness, exposure, shadows, color response, focus, depth of field, grain and motion blur. Preserve the reference identity without beautification or changes to its characteristic proportions. Keep appearance stable between frames while allowing natural expression and movement.
+
+Respect the source occlusion order. Hands, objects and other people pass in front of the replacement head at their original times and positions. Preserve the original motion's small variations and recorded rhythm.
+
+For visible speech, align the replacement mouth and jaw with the source speaker's original words, syllable timing, pauses and vocal delivery. Keep lip closure and opening consistent with the corresponding sounds, with natural teeth and tongue visibility. Follow the original speaking and listening intervals: an off-screen voice does not cause the visible target to speak. During non-speaking actions, keep mouth behavior appropriate to the original action, including eating, drinking or breathing when supported by the scene. The target's speech must follow the original soundtrack, without additional dialogue or changes to its timing.
+
+overall_soundscape:
+Retain the source recording's existing ambience and action sounds, when present, at their original timing. The final export reuses the original soundtrack; a silent source remains silent.
+
+non_diegetic_music:
+Retain only music already present in the original soundtrack, when present, at its original timing and level.

@@ -6,7 +6,7 @@ Cole os comandos no **terminal do Jupyter ou do Code Server do Pod**. Não cole 
 
 O teste H3_TESTE_MASCARA_V1 foi aprovado pelo usuário em geração real. Seu código foi incorporado sem mudanças ao pacote `H3-Teste-Mascara-V1`. O workflow principal usa os identificadores `H3T1_`; os nós antigos permanecem disponíveis apenas para compatibilidade.
 
-Se o ComfyUI já funciona, para receber esta correção execute:
+Se o ComfyUI já funciona, pare o servidor pelo terminal dele antes de atualizar. Para receber esta correção execute:
 
 ```bash
 cd /workspace/modeloh3
@@ -19,6 +19,10 @@ Reinicie o ComfyUI pelo mesmo método que já usa e reabra o workflow do reposit
 Se aparecer “A protecao removeu toda a area de edicao”, a execução foi bloqueada antes do H3. Não desative as proteções automaticamente: examine a seleção e a detecção das regiões protegidas. A prévia vermelha mostra o que será editado; essa mesma área deve aparecer cinza na referência sanitizada.
 
 Se aparecer “No validado ausente ou diferente”, sincronize com `update_nodes.sh` e reinicie. O comando `start.sh` compara o conteúdo do pacote com o repositório, não apenas seu nome. Um servidor iniciado por outro método não passa por essa checagem do launcher.
+
+O atualizador verifica os arquivos de origem antes de copiar, prepara a cópia inteira, bloqueia atualizações simultâneas e tenta restaurar a instalação anterior se uma operação de troca falhar. Interrupção brusca do Pod ou falha do disco durante a restauração ainda pode exigir recuperar o backup. Não interrompa uma atualização em andamento.
+
+[Prompt base para novas gerações](PROMPT_BASE.md): incluído no workflow, editável, com instruções de realismo, movimento, identidade e sincronia labial.
 
 A correção bloqueia a máscara vazia em todo o clipe; frames vazios individuais são permitidos. Ela não avalia automaticamente se a identidade foi trocada corretamente. A validação real do pacote não isola qual mudança foi responsável pela melhora.
 

@@ -10,6 +10,18 @@ t=importlib.util.module_from_spec(spec);sys.modules['trial']=t;spec.loader.exec_
 from trial.guards import validate_mask
 
 class Checks(unittest.TestCase):
+    def test_base_prompt_parses_with_one_reference_and_silent_source(self):
+        text=(ROOT/'prompts/BASE_CABECA_EN.txt').read_text().strip()
+        brief=t.v2.H3ManualBriefV2().run(text)[0]
+        self.assertEqual(brief['edit_regions'], 'face\nhair')
+        normalized=t.v2.normalize_references(brief['prompt'],1,False)
+        self.assertIn('<Picture 1>',normalized)
+        self.assertIn('<Video 1>',normalized)
+        self.assertNotIn('@Audio1',normalized)
+        workflow=json.loads((ROOT/'workflows/H3_PROMPT_UNICO_V2.json').read_text())
+        field=next(n for n in workflow['nodes'] if n['id']==4)['widgets_values'][0]
+        self.assertEqual(field,text)
+
     def test_protection_removes_everything(self):
         frames=torch.full((5,64,64,3),.2)
         person=torch.ones(5,64,64);face=torch.zeros_like(person);face[:,16:32,16:32]=1
