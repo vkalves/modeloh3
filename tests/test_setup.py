@@ -56,12 +56,23 @@ class SetupTests(unittest.TestCase):
         process.wait.return_value = 0
         response = io.BytesIO(json.dumps(nodes).encode())
         with patch.dict(os.environ, COMFY_DIR='/tmp/h3-correct', WORKFLOW=WORKFLOW.name, PORT=str(port)):
-            with patch.object(server.subprocess, 'run') as probe, patch.object(server.subprocess, 'Popen', return_value=process) as launch:
+            with patch.object(server, 'check_compatibility', return_value='OK'), patch.object(server.subprocess, 'run') as probe, patch.object(server.subprocess, 'Popen', return_value=process) as launch:
                 with patch.object(server.urllib.request, 'urlopen', return_value=response):
                     self.assertEqual(server.main(), 0)
                 self.assertEqual(launch.call_args.args[0][0], '/tmp/h3-correct/.venv-h3/bin/python')
                 self.assertEqual(str(launch.call_args.kwargs['cwd']), '/tmp/h3-correct')
                 self.assertEqual(probe.call_args.args[0][0], '/tmp/h3-correct/.venv-h3/bin/python')
+
+    def test_incompatible_installation_never_launches(self):
+        with socket.socket() as sock:
+            sock.bind(('0.0.0.0', 0))
+            port = sock.getsockname()[1]
+        with patch.dict(os.environ, COMFY_DIR='/tmp/incompatible-h3', PORT=str(port)):
+            with patch.object(server, 'check_compatibility', side_effect=ValueError('VAE INT8 ausente')):
+                with patch.object(server.subprocess, 'Popen') as launch:
+                    with self.assertRaisesRegex(ValueError, 'INT8'):
+                        server.main()
+                    launch.assert_not_called()
 
     def test_failed_child_keeps_failure_exit_code(self):
         result = subprocess.run([sys.executable, str(ROOT/'scripts/run_step.py'), sys.executable, '-c', 'raise SystemExit(7)'])

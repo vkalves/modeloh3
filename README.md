@@ -4,6 +4,17 @@ Instala o ComfyUI **v0.38.0**, os pesos MiniMax H3, SAM3.1 e o workflow atual **
 
 A V2 é genérica: ela não fica presa a um vídeo ou personagem específico. O usuário define quem editar, quais regiões regenerar, o que proteger e o prompt completo do H3.
 
+**[Tutorial completo: instalação, atualização e solução de erros](docs/INSTALACAO_E_ERROS.md)** — comandos para o terminal do Pod e causas possíveis de erros de instalação, vídeo preto, memória, máscara, referências e exportação.
+
+## Proteções contra vídeo preto
+
+- O instalador e o launcher conferem o suporte ao VAE H3 INT8/convrot no código do ComfyUI usado.
+- `verify.sh` também confere o SHA256 do VAE de vídeo, além dos outros três pesos H3 registrados.
+- O workflow usa `H3SafeVAEDecode`: rejeita latentes/pixels com NaN/Inf e vídeos inteiros pretos antes de salvar a geração bruta ou compor o resultado final.
+- O launcher foi corrigido para executar sem o caractere nulo que existia em seu código.
+
+Essas proteções detectam falhas específicas. Elas não garantem a qualidade visual ou a troca de identidade. Após atualizar, execute `install.sh`, reinicie com `start.sh` e carregue novamente o JSON instalado; um workflow já aberto pode continuar usando a versão antiga.
+
 ## O que mudou na V2
 
 - `[PESSOA]` identifica **quem** será editado no vídeo.

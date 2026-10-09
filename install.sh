@@ -40,6 +40,7 @@ cd "$COMFY_DIR"
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || { echo 'ComfyUI tem alteracoes locais. Preserve-as antes de atualizar.'; exit 1; }
 run git fetch --depth 1 origin "tag" "$COMFY_VERSION"
 git checkout --detach "$COMFY_VERSION"
+"$BASE_PYTHON" "$ROOT_DIR/scripts/check_compatibility.py"
 step 3 'Criando ambiente Python exclusivo do H3'
 if [[ ! -x "$PYTHON" ]]; then
   run "$BASE_PYTHON" -m venv "$COMFY_DIR/.venv-h3"
@@ -56,7 +57,7 @@ BASE_NODE_SOURCE="$ROOT_DIR/custom_nodes/ComfyUI-H3-Reusable"
 V2_NODE_SOURCE="$ROOT_DIR/custom_nodes/H3-Prompt-Unico-V2"
 grep -q h3-mask-protection-v2 "$BASE_NODE_SOURCE/__init__.py"
 grep -q h3-smart-mask-v2-generic "$V2_NODE_SOURCE/__init__.py"
-"$PYTHON" -m py_compile "$BASE_NODE_SOURCE/__init__.py" "$BASE_NODE_SOURCE/logic.py" "$V2_NODE_SOURCE/__init__.py"
+"$PYTHON" -m py_compile "$BASE_NODE_SOURCE/__init__.py" "$BASE_NODE_SOURCE/logic.py" "$BASE_NODE_SOURCE/validation.py" "$V2_NODE_SOURCE/__init__.py"
 BACKUP="$COMFY_DIR/h3_backups/$(date +%Y%m%d-%H%M%S)-$$"
 mkdir -p "$BACKUP"
 for node_dir in ComfyUI-H3-Reusable H3-Prompt-Unico-V2; do

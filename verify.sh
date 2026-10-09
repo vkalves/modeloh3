@@ -9,6 +9,7 @@ echo "== Ambiente =="
 actual_version="$(git describe --tags --exact-match 2>/dev/null || true)"
 [[ "$actual_version" = "$COMFY_VERSION" ]] || { echo "ERRO: esperado $COMFY_VERSION, encontrado $actual_version"; exit 1; }
 echo "$actual_version"
+"$PYTHON" "$ROOT_DIR/scripts/check_compatibility.py"
 "$PYTHON" -m pip check
 echo
 echo "== GPU / Torch =="
@@ -48,6 +49,7 @@ echo "== Pesos H3 com SHA256 registrado =="
 check_file "9255f52b6677845ad238f20dfaafa94727053694127ab7f255c048f0f9365779" "models/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors"
 check_file "35a88d51044231fe332301d7a62aa81e3f2cba62febeb446e2c1e3e0ef76f2c6" "models/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
 check_file "8e505d95dd1561d47abd43d4238fd40d9bb1ae9e147ed0a4cba778d76ae4db48" "models/vae/minimax_h3_audio_vae_fp32.safetensors"
+check_file "52a2c8c73583c86e4f41cdcce3a6ad0ea562987bc0bf3d60a0cef5f5c8e60c0e" "models/vae/minimax_h3_video_vae_int8_convrot.safetensors"
 
 echo
 echo "== Pesos e nos do workflow V2 =="
@@ -55,11 +57,19 @@ check_present "models/vae/minimax_h3_video_vae_int8_convrot.safetensors"
 check_present "models/checkpoints/sam3.1_multiplex_fp16.safetensors"
 check_present "custom_nodes/ComfyUI-H3-Reusable/__init__.py"
 check_present "custom_nodes/ComfyUI-H3-Reusable/logic.py"
+check_present "custom_nodes/ComfyUI-H3-Reusable/validation.py"
 check_present "custom_nodes/H3-Prompt-Unico-V2/__init__.py"
 grep -q "h3-mask-protection-v2" "custom_nodes/ComfyUI-H3-Reusable/__init__.py" || { echo "ERRO: base H3 reutilizavel nao encontrada"; exit 1; }
 grep -q "h3-smart-mask-v2-generic" "custom_nodes/H3-Prompt-Unico-V2/__init__.py" || { echo "ERRO: mascara universal V2 nao encontrada"; exit 1; }
+grep -q "H3SafeVAEDecode" "custom_nodes/ComfyUI-H3-Reusable/__init__.py" || { echo "ERRO: protecao de decodificacao ausente; repita install.sh"; exit 1; }
 check_present "user/default/workflows/$WORKFLOW"
 "$PYTHON" -m json.tool "user/default/workflows/$WORKFLOW" >/dev/null
+"$PYTHON" - "$COMFY_DIR/user/default/workflows/$WORKFLOW" <<'PY'
+import json, sys
+workflow = json.load(open(sys.argv[1]))
+if not any(n['type'] == 'H3SafeVAEDecode' for n in workflow['nodes']):
+    raise SystemExit('ERRO: workflow antigo, sem protecao contra video preto. Repita install.sh.')
+PY
 
 echo
 echo "Arquivos V2 verificados. Isso valida arquivos e dependencias, nao a qualidade visual de uma geracao especifica."

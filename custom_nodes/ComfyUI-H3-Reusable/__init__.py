@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 import folder_paths
 from .logic import timing, canvas, reference_items, build_prompt
+from .validation import require_finite, validate_frames
 
 EMPTY = '(VAZIO - ignorar)'
 CATEGORY = 'H3 / Reutilizavel'
@@ -234,6 +235,7 @@ class H3SourceLatent:
     def run(self, images, vae, mask, empty_av):
         import comfy.nested_tensor
         samples = vae.encode(images[..., :3])
+        require_finite(samples, 'Codificacao do video original pelo VAE H3')
         expected_video, audio = empty_av['samples'].unbind()
         if samples.shape != expected_video.shape:
             raise ValueError(f'VAE e Ref2VA discordam: {samples.shape} / {expected_video.shape}')
@@ -242,6 +244,30 @@ class H3SourceLatent:
         # Audio sampling is discarded; output always uses original source waveform.
         return ({'samples': comfy.nested_tensor.NestedTensor((samples, audio)),
                  'noise_mask': comfy.nested_tensor.NestedTensor((m, torch.ones_like(audio)))},)
+
+class H3SafeVAEDecode:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'samples': ('LATENT',), 'vae': ('VAE',)}}
+    RETURN_TYPES = ('IMAGE',)
+    FUNCTION = 'run'
+    CATEGORY = CATEGORY
+
+    def run(self, samples, vae):
+        latent = samples['samples']
+        require_finite(latent, 'Latente gerado pelo sampler H3')
+        if latent.ndim != 5 or latent.shape[1] != 24:
+            raise ValueError('Separe o latente de video do AV antes de decodificar (24 canais H3).')
+        if getattr(vae, 'latent_channels', None) != 24:
+            raise ValueError('Use o VAE de video MiniMax H3; o VAE de audio nao serve neste no.')
+        images = vae.decode(latent)
+        # Native video VAE returns [batch, frames, height, width, channels].
+        # Match ComfyUI VAEDecode's conversion to the IMAGE frame batch.
+        if images.ndim == 5:
+            images = images.reshape(-1, images.shape[-3], images.shape[-2], images.shape[-1])
+        validate_frames(images)
+        return (images,)
+
 
 class H3Composite:
     @classmethod
@@ -252,6 +278,8 @@ class H3Composite:
     CATEGORY = CATEGORY
     def run(self, generated, mask, source):
         from comfy_extras.nodes_video import CreateVideo
+        validate_frames(generated)
+        require_finite(mask, 'Mascara de composicao')
         count = source['count']
         original = source['original']
         if len(generated) < count or len(mask) < count:
@@ -266,11 +294,12 @@ def composite_frames(generated, mask, original):
     alpha = F.interpolate(mask[:, None], size=size, mode='nearest')[:, 0, :, :, None].clamp(0, 1)
     return original * (1-alpha) + image * alpha
 
-NODE_CLASS_MAPPINGS = {c.__name__: c for c in (H3OptionalImage, H3Brief, H3PrepareVideo, H3AutomaticMask, H3References, H3SourceLatent, H3Composite)}
+NODE_CLASS_MAPPINGS = {c.__name__: c for c in (H3OptionalImage, H3Brief, H3PrepareVideo, H3AutomaticMask, H3References, H3SourceLatent, H3SafeVAEDecode, H3Composite)}
 NODE_DISPLAY_NAME_MAPPINGS = {'H3OptionalImage': 'H3 Referencia opcional', 'H3Brief': 'H3 Pedido da geracao',
  'H3PrepareVideo': 'H3 Preparar video e preservar audio', 'H3AutomaticMask': 'H3 SAM3 automatico + proteger objetos',
  'H3References': 'H3 Ref2VA + prompt oficial dinamico', 'H3SourceLatent': 'H3 Latente original + mascara nativa',
- 'H3Composite': 'H3 Compor sobre original + audio original'}
+ 'H3Composite': 'H3 Compor sobre original + audio original',
+ 'H3SafeVAEDecode': 'H3 Decodificar video com protecao contra preto/NaN'}
 
 class H3SavePrompt:
     @classmethod
