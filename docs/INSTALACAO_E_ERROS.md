@@ -229,3 +229,7 @@ O suporte ao VAE quantizado foi conferido no código oficial do ComfyUI v0.38.0:
 - [Pesos oficiais dos VAEs e metadados](https://huggingface.co/Comfy-Org/MiniMax-H3/tree/main/vae).
 
 Os testes automatizados deste repositório validam as proteções em CPU. Uma geração real no seu Pod continua necessária para confirmar que GPU, dependências, modelos e vídeo funcionam juntos. Nenhuma verificação garante ausência de todos os erros de geração.
+
+## Preparar o próximo vídeo com outro chat
+
+Use o [guia de análise do original, referências e adaptação do prompt](GUIA_NOVO_CHAT.md). Ele inclui uma mensagem pronta para iniciar a conversa e orienta o chat a entregar o prompt completo, sem reinstalar o ambiente nem mudar os parâmetros aprovados.

@@ -1,0 +1,16 @@
+Quero sua ajuda para preparar novas gerações no meu MiniMax H3, usando meu workflow atual.
+
+Primeiro leia e siga este guia:
+https://github.com/vkalves/modeloh3/blob/main/docs/GUIA_NOVO_CHAT.md
+
+Leia também o prompt base e suas instruções:
+https://github.com/vkalves/modeloh3/blob/main/prompts/BASE_CABECA_EN.txt
+https://github.com/vkalves/modeloh3/blob/main/docs/PROMPT_BASE.md
+
+Vou enviar primeiro o vídeo original. Analise a pessoa-alvo, a câmera, os movimentos, as ocultações e o áudio do trecho solicitado. Depois vou enviar as referências: analise cada uma e organize seus papéis e a ordem dos slots. Só então adapte o prompt base para essa geração.
+
+Se eu já enviar tudo junto, faça as análises nessa mesma ordem e depois entregue o prompt. Se não conseguir abrir ou analisar algum arquivo, diga isso claramente. Não invente detalhes, falas ou tempos.
+
+Explique em português simples e curto. Entregue o prompt em inglês, em um único bloco com [PESSOA], [EDITAR], [PROTEGER] e [PROMPT], pronto para colar em 03 - PEDIDO UNIVERSAL. Priorize realismo, referências fiéis, continuidade dos movimentos e câmera e boca alinhada ao áudio original, sem prometer perfeição.
+
+Mantenha os parâmetros que eu já aprovei. Não reinstale nada, não adicione LoRA e não altere o workflow para escrever o prompt.

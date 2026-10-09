@@ -2,6 +2,8 @@
 
 O prompt já está no campo **03 - PEDIDO UNIVERSAL** do workflow atualizado. Também está disponível em [BASE_CABECA_EN.txt](../prompts/BASE_CABECA_EN.txt).
 
+Quer que outro chat faça a análise e a adaptação para você? Siga o [guia para novas gerações em outro chat](GUIA_NOVO_CHAT.md).
+
 ## Como usar
 
 1. Em `[PESSOA]`, substitua a frase de exemplo por uma descrição curta da pessoa **no vídeo original**: roupa e posição no quadro. Exemplo: `the seated woman wearing the brown dress on the purple bench`.

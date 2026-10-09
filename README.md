@@ -6,6 +6,12 @@ A V2 é genérica: ela não fica presa a um vídeo ou personagem específico. O 
 
 **[Tutorial completo: instalação, atualização e solução de erros](docs/INSTALACAO_E_ERROS.md)** — comandos para o terminal do Pod e causas possíveis de erros de instalação, vídeo preto, memória, máscara, referências e exportação.
 
+## Preparar uma geração com outro chat
+
+[Guia passo a passo para o novo chat](docs/GUIA_NOVO_CHAT.md) · [Mensagem pronta para iniciar a conversa](prompts/INICIAR_NOVO_CHAT_PT.txt).
+
+Envie primeiro o vídeo original para análise; depois, as referências. O chat organiza as fotos por slot e adapta o prompt base ao caso, entregando um bloco completo para colar no workflow.
+
 ## Prompt base para novas gerações
 
 O campo **03 - PEDIDO UNIVERSAL** já contém a base em inglês para troca de rosto e cabelo, com realismo, fidelidade das referências, continuidade do movimento e boca alinhada à fala original. [Como usar e adaptar para mais referências](docs/PROMPT_BASE.md) · [Copiar o prompt](prompts/BASE_CABECA_EN.txt).
