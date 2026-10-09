@@ -43,8 +43,8 @@ class SetupTests(unittest.TestCase):
     def test_missing_custom_node_detected(self):
         available = dict.fromkeys(server.required_nodes(WORKFLOW), {})
         self.assertEqual(server.missing_nodes(WORKFLOW, available), [])
-        del available['H3ManualReferencesV2']
-        self.assertEqual(server.missing_nodes(WORKFLOW, available), ['H3ManualReferencesV2'])
+        del available['H3T1_H3ManualReferencesV2']
+        self.assertEqual(server.missing_nodes(WORKFLOW, available), ['H3T1_H3ManualReferencesV2'])
 
     def test_start_uses_explicit_python_and_directory(self):
         with socket.socket() as sock:

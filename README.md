@@ -6,14 +6,36 @@ A V2 é genérica: ela não fica presa a um vídeo ou personagem específico. O 
 
 **[Tutorial completo: instalação, atualização e solução de erros](docs/INSTALACAO_E_ERROS.md)** — comandos para o terminal do Pod e causas possíveis de erros de instalação, vídeo preto, memória, máscara, referências e exportação.
 
+## Correção validada: geração sem alteração
+
+Em 09/10/2026, o usuário confirmou que o pacote **H3_TESTE_MASCARA_V1** resolveu o problema no teste real. O workflow principal agora usa exatamente os arquivos Python desse pacote, com os mesmos identificadores `H3T1_`. Os nomes “TESTE V1” são mantidos para preservar o código aprovado e evitar colisões com nós antigos.
+
+- Interrompe a execução se a proteção eliminar toda a seleção de edição.
+- Confere a máscara nas referências, no latente e na composição.
+- Mantém uma cópia independente da prévia com a área cinza.
+- Preserva frames individuais sem seleção quando a pessoa sai do quadro ou fica oculta.
+- Confere o conteúdo dos nós instalados ao iniciar com `start.sh`.
+
+Para atualizar **somente nós e workflow**, sem reinstalar ComfyUI ou modelos:
+
+```bash
+cd /workspace/modeloh3
+git pull --ff-only
+bash update_nodes.sh
+```
+
+Depois reinicie o ComfyUI pelo método que já usa e reabra `H3_PROMPT_UNICO_V2.json`. O script salva backup dos nós e do workflow anterior. A cópia já aberta no navegador não é atualizada automaticamente. Quem já instalou o teste aprovado pode continuar usando esse teste; os arquivos Python são idênticos.
+
+O modelo genérico do repositório mantém seus parâmetros anteriores (20 passos, 672, `match`); prompt e fotos continuam manuais. A resolução e os passos de produção devem ser os que você validou. A aprovação do teste não demonstra qual mudança isolada causou a melhora nem garante identidade perfeita em outros vídeos.
+
 ## Proteções contra vídeo preto
 
 - O instalador e o launcher conferem o suporte ao VAE H3 INT8/convrot no código do ComfyUI usado.
 - `verify.sh` também confere o SHA256 do VAE de vídeo, além dos outros três pesos H3 registrados.
-- O workflow usa `H3SafeVAEDecode`: rejeita latentes/pixels com NaN/Inf e vídeos inteiros pretos antes de salvar a geração bruta ou compor o resultado final.
+- O workflow usa `H3T1_H3SafeVAEDecode`: rejeita latentes/pixels com NaN/Inf e vídeos inteiros pretos antes de salvar a geração bruta ou compor o resultado final.
 - O launcher foi corrigido para executar sem o caractere nulo que existia em seu código.
 
-Essas proteções detectam falhas específicas. Elas não garantem a qualidade visual ou a troca de identidade. Após atualizar, execute `install.sh`, reinicie com `start.sh` e carregue novamente o JSON instalado; um workflow já aberto pode continuar usando a versão antiga.
+Essas proteções detectam falhas específicas. Elas não garantem a qualidade visual ou a troca de identidade. Para esta correção, execute `update_nodes.sh`, reinicie pelo método que já usa e carregue novamente o JSON instalado; um workflow já aberto pode continuar usando a versão antiga.
 
 ## O que mudou na V2
 
@@ -67,10 +89,10 @@ Pare o processo do ComfyUI H3 e execute:
 ```bash
 cd /workspace/modeloh3
 git pull --ff-only
-bash install.sh
+bash update_nodes.sh
 ```
 
-O instalador faz backup das versões anteriores dos nós/workflow antes de copiar a versão atual.
+O atualizador faz backup das versões anteriores dos nós/workflow antes de copiar a versão atual.
 
 ## 4. Iniciar o ComfyUI correto
 
@@ -148,7 +170,7 @@ cd /workspace/modeloh3
 bash verify.sh
 ```
 
-A verificação confere ambiente, dependências, arquivos de modelo, os dois pacotes de nós personalizados e o JSON do workflow atual. Ela não mede qualidade visual.
+A verificação confere ambiente, dependências, arquivos de modelo, os pacotes de nós personalizados e o JSON do workflow atual. Ela não mede qualidade visual.
 
 Para instalar em outro caminho:
 
@@ -158,11 +180,12 @@ COMFY_DIR=/workspace/MeuComfyH3 bash install.sh
 
 ## Estrutura dos nós personalizados
 
-A V2 usa dois pacotes locais do próprio repositório:
+O workflow atual usa o pacote validado; os dois anteriores são mantidos para workflows antigos:
 
 ```text
-custom_nodes/ComfyUI-H3-Reusable
-custom_nodes/H3-Prompt-Unico-V2
+custom_nodes/H3-Teste-Mascara-V1  # atual, codigo identico ao teste aprovado
+custom_nodes/ComfyUI-H3-Reusable  # legado
+custom_nodes/H3-Prompt-Unico-V2   # legado
 ```
 
-O primeiro contém a preparação do vídeo, latente mascarado, composição e salvamento do prompt. O segundo contém o pedido universal V2, referências manuais, máscara por pessoa + regiões e a referência de movimento sanitizada.
+O pacote atual reúne preparação, máscara validada, referências, latente, decodificação protegida e composição. Os nomes exclusivos evitam carregar silenciosamente os nós legados.

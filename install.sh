@@ -60,13 +60,14 @@ grep -q h3-smart-mask-v2-generic "$V2_NODE_SOURCE/__init__.py"
 "$PYTHON" -m py_compile "$BASE_NODE_SOURCE/__init__.py" "$BASE_NODE_SOURCE/logic.py" "$BASE_NODE_SOURCE/validation.py" "$V2_NODE_SOURCE/__init__.py"
 BACKUP="$COMFY_DIR/h3_backups/$(date +%Y%m%d-%H%M%S)-$$"
 mkdir -p "$BACKUP"
-for node_dir in ComfyUI-H3-Reusable H3-Prompt-Unico-V2; do
+for node_dir in ComfyUI-H3-Reusable H3-Prompt-Unico-V2 H3-Teste-Mascara-V1; do
   if [[ -e "custom_nodes/$node_dir" ]]; then
     mv "custom_nodes/$node_dir" "$BACKUP/"
   fi
 done
 cp -a "$BASE_NODE_SOURCE" custom_nodes/
 cp -a "$V2_NODE_SOURCE" custom_nodes/
+cp -a "$ROOT_DIR/custom_nodes/H3-Teste-Mascara-V1" custom_nodes/
 if [[ -f "user/default/workflows/$WORKFLOW" ]]; then
   cp -a "user/default/workflows/$WORKFLOW" "$BACKUP/"
 fi

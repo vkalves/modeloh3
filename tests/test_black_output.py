@@ -99,9 +99,9 @@ class DecodeTests(unittest.TestCase):
 
     def test_workflow_both_outputs_use_guarded_decoder(self):
         workflow = json.loads((ROOT / 'workflows/H3_PROMPT_UNICO_V2.json').read_text())
-        decoder = next(n for n in workflow['nodes'] if n['type'] == 'H3SafeVAEDecode')
+        decoder = next(n for n in workflow['nodes'] if n['type'] == 'H3T1_H3SafeVAEDecode')
         self.assertFalse(any(n['type'] == 'VAEDecode' for n in workflow['nodes']))
-        for target_type in ['H3Composite', 'CreateVideo']:
+        for target_type in ['H3T1_H3Composite', 'CreateVideo']:
             targets = {n['id'] for n in workflow['nodes'] if n['type'] == target_type}
             self.assertTrue(any(link[1] == decoder['id'] and link[3] in targets for link in workflow['links']))
 

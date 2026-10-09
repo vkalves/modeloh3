@@ -2,6 +2,26 @@
 
 Cole os comandos no **terminal do Jupyter ou do Code Server do Pod**. Não cole no campo de prompt do ComfyUI. Execute um bloco por vez e espere terminar.
 
+## Atualização da correção aprovada em 09/10/2026
+
+O teste H3_TESTE_MASCARA_V1 foi aprovado pelo usuário em geração real. Seu código foi incorporado sem mudanças ao pacote `H3-Teste-Mascara-V1`. O workflow principal usa os identificadores `H3T1_`; os nós antigos permanecem disponíveis apenas para compatibilidade.
+
+Se o ComfyUI já funciona, para receber esta correção execute:
+
+```bash
+cd /workspace/modeloh3
+git pull --ff-only
+bash update_nodes.sh
+```
+
+Reinicie o ComfyUI pelo mesmo método que já usa e reabra o workflow do repositório. Esse comando não baixa pesos, não instala dependências e não altera a versão do ComfyUI. Faz backup dos nós/workflow no destino. Para destino diferente: `COMFY_DIR=/caminho/do/ComfyUI bash update_nodes.sh`.
+
+Se aparecer “A protecao removeu toda a area de edicao”, a execução foi bloqueada antes do H3. Não desative as proteções automaticamente: examine a seleção e a detecção das regiões protegidas. A prévia vermelha mostra o que será editado; essa mesma área deve aparecer cinza na referência sanitizada.
+
+Se aparecer “No validado ausente ou diferente”, sincronize com `update_nodes.sh` e reinicie. O comando `start.sh` compara o conteúdo do pacote com o repositório, não apenas seu nome. Um servidor iniciado por outro método não passa por essa checagem do launcher.
+
+A correção bloqueia a máscara vazia em todo o clipe; frames vazios individuais são permitidos. Ela não avalia automaticamente se a identidade foi trocada corretamente. A validação real do pacote não isola qual mudança foi responsável pela melhora.
+
 ## 1. Antes de instalar
 
 - Conecte o armazenamento que contém seus modelos. Se os arquivos já estão nele, não apague nem baixe tudo de novo.
@@ -85,7 +105,7 @@ Se o destino é personalizado, substitua `/workspace/ComfyUI-H3` pelo seu destin
 
 Atualizar o repositório não atualiza automaticamente o workflow que já estava aberto no navegador. Depois de `install.sh` e da reinicialização, carregue o JSON instalado novamente. Guarde seu prompt e suas escolhas antes de substituir a tela antiga.
 
-O nó de decodificação atualizado se chama **DECODIFICAR H3 — PROTECAO CONTRA PRETO / NaN**, tipo `H3SafeVAEDecode`. Ele alimenta tanto a geração bruta quanto a composição final.
+O nó de decodificação atualizado se chama **DECODIFICAR H3 — PROTECAO CONTRA PRETO / NaN**, tipo `H3T1_H3SafeVAEDecode`. Ele alimenta tanto a geração bruta quanto a composição final.
 
 ## 5. Primeiro teste
 

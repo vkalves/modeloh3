@@ -67,9 +67,10 @@ check_present "user/default/workflows/$WORKFLOW"
 "$PYTHON" - "$COMFY_DIR/user/default/workflows/$WORKFLOW" <<'PY'
 import json, sys
 workflow = json.load(open(sys.argv[1]))
-if not any(n['type'] == 'H3SafeVAEDecode' for n in workflow['nodes']):
-    raise SystemExit('ERRO: workflow antigo, sem protecao contra video preto. Repita install.sh.')
+if not any(n['type'] == 'H3T1_H3SafeVAEDecode' for n in workflow['nodes']):
+    raise SystemExit('ERRO: workflow antigo. Execute bash update_nodes.sh e reabra o JSON.')
 PY
 
+"$PYTHON" "$ROOT_DIR/scripts/sync_nodes.py" --check "$COMFY_DIR"
 echo
 echo "Arquivos V2 verificados. Isso valida arquivos e dependencias, nao a qualidade visual de uma geracao especifica."
