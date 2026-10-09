@@ -2,6 +2,10 @@
 
 Cole os comandos no **terminal do Jupyter ou do Code Server do Pod**. Não cole no campo de prompt do ComfyUI. Execute um bloco por vez e espere terminar.
 
+## Trocar para um Pod mais forte
+
+Se quer instalar em uma GPU mais barata e depois migrar sem baixar novamente os modelos, siga o [roteiro de instalação e troca de GPU](INSTALAR_E_TROCAR_GPU.md). Ele explica qual armazenamento permite isso e como iniciar a instalação existente no Pod novo. A migração não exige `install.sh` quando os arquivos e o ambiente continuam compatíveis.
+
 ## Atualização da correção aprovada em 09/10/2026
 
 O teste H3_TESTE_MASCARA_V1 foi aprovado pelo usuário em geração real. Seu código foi incorporado sem mudanças ao pacote `H3-Teste-Mascara-V1`. O workflow principal usa os identificadores `H3T1_`; os nós antigos permanecem disponíveis apenas para compatibilidade.

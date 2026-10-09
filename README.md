@@ -6,6 +6,12 @@ A V2 é genérica: ela não fica presa a um vídeo ou personagem específico. O 
 
 **[Tutorial completo: instalação, atualização e solução de erros](docs/INSTALACAO_E_ERROS.md)** — comandos para o terminal do Pod e causas possíveis de erros de instalação, vídeo preto, memória, máscara, referências e exportação.
 
+## Instalar uma vez e migrar para uma GPU mais forte
+
+[Passo a passo: instalação e troca de Pod sem baixar os modelos novamente](docs/INSTALAR_E_TROCAR_GPU.md).
+
+O guia cobre instalação no Pod mais barato, uso do mesmo Network Volume, preservação do ambiente e das configurações, verificações no novo Pod e inicialização sem reinstalar. Para apenas migrar, mantenha a versão que já funciona; não execute atualizações junto com a troca.
+
 ## Preparar uma geração com outro chat
 
 [Guia passo a passo para o novo chat](docs/GUIA_NOVO_CHAT.md) · [Mensagem pronta para iniciar a conversa](prompts/INICIAR_NOVO_CHAT_PT.txt).
